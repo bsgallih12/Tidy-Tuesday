@@ -1,0 +1,68 @@
+---
+title: "Untitled"
+format: html
+echo: false
+warning: false
+self-contained: true
+---
+
+## Tidy Tuesday (Bigfoot Sightings)
+
+```{r input data}
+#| include: false
+library(tidyverse)
+library(tidytuesdayR)
+library(ggpattern)
+library(glue)
+library(ggtext)
+# data <- tidytuesdayR::tt_load('2022-09-13')
+# data <- data$bigfoot
+# write.csv(data, file = "bigfoot.csv")
+data <- data.frame(read.csv("bigfoot.csv"))
+data <- data %>% select("season", "state") %>% 
+  mutate(season = as.factor(season),
+         state = as.factor(state)) %>% 
+  filter(season != "NA" & season != "Unknown")
+
+plot_data_totals <- data %>% group_by(state) %>% summarize(n = n()) %>% arrange(desc(n)) %>% head(5)
+plot_data_totals$yposition <- 300
+
+plot_data <- data %>% group_by(season,state) %>% summarize(observations = n(),
+                                              .groups = "drop") %>% filter(state == "Washington" |
+                                                                             state == "California" |
+                                                                             state == "Ohio" |
+                                                                             state == "Florida" |
+                                                                             state == "Oregon"
+                                                                             )
+
+plot <- plot_data %>% ggplot(aes(x = reorder(state, -observations), y = observations, fill = season)) + geom_col(position = "dodge", color = "black") + scale_fill_manual(values = c("orange","#3D847D","yellow","white")) + geom_text(aes(x = reorder(state, -observations), y = observations + 10, label = glue("{observations}")), position = position_dodge2(width = .9), size = 3.5) + 
+  geom_text(data = plot_data_totals, aes(x = reorder(state, -n), y = yposition - 30, label = glue("N = {n}")), inherit.aes = FALSE) + theme_bw() + theme(panel.grid.major.x = element_blank(),
+                                                                                                                                                         panel.grid.minor.y = element_blank(),
+                                                                                                                                                         panel.grid.major.y = element_blank()) + 
+  labs(title = "**Top 5 States with Bigfoot Sightings by Season**",
+       x = "**States**",
+       y = "**Number of Sightings**",
+       caption = "**Note**: N refers to total number of Bigfoot sightings across seasons",
+       fill = "Season",
+       alt = "Graph of Bigfoot sightings by state. Washington has the most sightings") +
+  theme(plot.caption = element_text(hjust = 0),
+        plot.title = element_text(hjust = 0)) + theme(plot.caption = element_markdown(),
+                                                      plot.title = element_markdown(),
+                                                      axis.title.x = element_markdown(),
+                                                      axis.title.y = element_markdown(),
+                                                      plot.title.position = "plot",
+                                                      plot.caption.position = "plot")
+
+plot
+
+ggsave(filename = "Bigfoot.jpeg")
+# Add Count Totals Inside Bar
+# Add Total Count Above Bar
+
+```
+
+```{r graph}
+plot
+```
+
+
